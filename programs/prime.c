@@ -38,28 +38,27 @@ int main(int argc, char *argv[])
 	{
 		max_number = atoi(argv[1]);
 	}
-	
+
 	if (max_number == 0)
 	{
 		printf("Invalid argument(s).\n");
 		printf("usage: %s max_number\n", argv[0]);
 		exit(1);
 	}
-	
+
 	printf("Prime v1.5 - Searching up to %ld.\nProcessing...\n", max_number);
 
 	time(&start);
 
 	for(i=3; i<=max_number; i+=2)
 	{
-		for(j=2; j<=i-1; j++)
+		for(j=2; j*j<=i; j++)
 		{
 			if(i%j==0) break; //Number is divisble by some other number. So break out
 		}
-		if(i==j)
-		{
-			primes = primes + 1;
-		}
+		if(j*j>i)
+			primes++;
+
 	} //Continue loop up to max number
 
 	time(&finish);

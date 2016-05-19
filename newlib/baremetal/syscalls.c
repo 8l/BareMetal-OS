@@ -1,6 +1,6 @@
 // ============================================================================
 // BareMetal -- a 64-bit OS written in Assembly for x86-64 systems
-// Copyright (C) 2008-2013 Return Infinity -- see LICENSE.TXT
+// Copyright (C) 2008-2016 Return Infinity -- see LICENSE.TXT
 //
 // Syscalls glue for Newlib
 // ============================================================================
@@ -21,10 +21,10 @@ inline void outportbyte(unsigned int port,unsigned char value);
 // --- Process Control ---
 
 // exit -- Exit a program without cleaning up files
-int _exit(int val)
+void _exit(int val)
 {
-	exit(val);
-	return (-1);
+	unsigned int reset = 256;
+	asm volatile ("call *0x001000B8" : : "d"(reset));
 }
 
 // execve -- Transfer control to a new process
@@ -36,6 +36,9 @@ int execve(char *name, char **argv, char **env)
 }
 
 // environ - A pointer to a list of environment variables and their values
+// Minimal implementation
+char *__env[1] = { 0 };
+char **environ = __env;
 
 // getpid -- Process-ID
 // Return 1 by default
@@ -119,7 +122,6 @@ int read(int file, char *ptr, int len)
 		ptr[len] = '\n'; // BareMetal does not add a newline after keyboard input ...
 		ptr[len+1] = 0; // ... but C expects it.
 		len+=1;
-		write(1, "\n", 1);
 	}
 	else
 	{
@@ -206,12 +208,12 @@ caddr_t sbrk(int incr)
 
 // --- Other ---
 
-// gettimeofday -- 
+// gettimeofday --
 int gettimeofday(struct timeval *p, void *z)
 {
 	unsigned char bcd;
 	struct tm t;
-    
+
 //	outportbyte(0x70, 0x32); // Century
 //	bcd = inportbyte(0x71);
 	outportbyte(0x70, 0x09); // Year
@@ -240,10 +242,16 @@ int gettimeofday(struct timeval *p, void *z)
 	return 0;
 }
 
+// times - Timing information for current process.
+// Minimal implementation
+clock_t times(struct tms *buf){
+        return -1;
+}
+
 void __stack_chk_fail(void)
 {
 	write(1, "Stack smashin' detected!\n", 25);
-} 
+}
 
 inline unsigned char inportbyte(unsigned int port)
 {

@@ -1,6 +1,6 @@
 ; =============================================================================
 ; BareMetal -- a 64-bit OS written in Assembly for x86-64 systems
-; Copyright (C) 2008-2014 Return Infinity -- see LICENSE.TXT
+; Copyright (C) 2008-2016 Return Infinity -- see LICENSE.TXT
 ;
 ; AHCI Driver
 ; =============================================================================
@@ -45,7 +45,6 @@ init_ahci_found:
 
 ; Basic config of the controller, port 0
 	mov rsi, rax			; RSI holds the ABAR
-	mov rdi, rsi
 
 ; Search the implemented ports for a drive
 	mov eax, [rsi+0x0C]		; PI – Ports Implemented
@@ -57,8 +56,7 @@ nextport:
 	jnc nodrive
 	mov eax, [rsi+rbx]
 	cmp eax, 0
-	je nodrive
-	jmp founddrive
+	jne founddrive
 
 nodrive:
 	add ecx, 1
@@ -79,11 +77,11 @@ founddrive:
 	pop rcx				; Restore port number
 	mov rax, ahci_cmdlist		; 1024 bytes per port
 	stosd				; Offset 00h: PxCLB – Port x Command List Base Address
-	xor eax, eax
+	shr rax, 32			; 63..32 bits of address
 	stosd				; Offset 04h: PxCLBU – Port x Command List Base Address Upper 32-bits
-	mov rax, ahci_cmdlist + 0x1000	; 256 or 4096 bytes per port
+	mov rax, ahci_receivedfis	; 256 or 4096 bytes per port
 	stosd				; Offset 08h: PxFB – Port x FIS Base Address
-	xor eax, eax
+	shr rax, 32			; 63..32 bits of address
 	stosd				; Offset 0Ch: PxFBU – Port x FIS Base Address Upper 32-bits
 	stosd				; Offset 10h: PxIS – Port x Interrupt Status
 	stosd				; Offset 14h: PxIE – Port x Interrupt Enable
@@ -136,14 +134,14 @@ iddrive:
 	mov rsi, [ahci_base]
 
 	mov rdi, ahci_cmdlist		; command list (1K with 32 entries, 32 bytes each)
-	xor eax, eax
-	mov eax, 0x00010005 ;4		; 1 PRDTL Entry, Command FIS Length = 16 bytes
+	mov eax, 0x00010004		; 1 PRDTL Entry, Command FIS Length = 16 bytes
+
 	stosd				; DW 0 - Description Information
 	xor eax, eax
 	stosd				; DW 1 - Command Status
-	mov eax, ahci_cmdtable
+	mov rax, ahci_cmdtable
 	stosd				; DW 2 - Command Table Base Address
-	xor eax, eax
+	shr rax, 32			; 63..32 bits of address
 	stosd				; DW 3 - Command Table Base Address Upper
 	stosd
 	stosd
@@ -246,7 +244,7 @@ readsectors:
 	stosd				; DW 1 - Command Status
 	mov eax, ahci_cmdtable
 	stosd				; DW 2 - Command Table Base Address
-	xor eax, eax
+	shr rax, 32			; 63..32 bits of address
 	stosd				; DW 3 - Command Table Base Address Upper
 	stosd
 	stosd
@@ -363,9 +361,9 @@ writesectors:
 	stosd				; DW 0 - Description Information
 	xor eax, eax
 	stosd				; DW 1 - Command Status
-	mov eax, ahci_cmdtable
+	mov rax, ahci_cmdtable
 	stosd				; DW 2 - Command Table Base Address
-	xor eax, eax
+	shr rax, 32			; 63..32 bits of address
 	stosd				; DW 3 - Command Table Base Address Upper
 	stosd
 	stosd

@@ -1,6 +1,6 @@
 ; =============================================================================
 ; BareMetal -- a 64-bit OS written in Assembly for x86-64 systems
-; Copyright (C) 2008-2014 Return Infinity -- see LICENSE.TXT
+; Copyright (C) 2008-2016 Return Infinity -- see LICENSE.TXT
 ;
 ; Memory functions
 ; =============================================================================
@@ -137,26 +137,6 @@ os_mem_get_free_end:
 	pop rax
 	pop rbx
 	pop rsi
-	ret
-; -----------------------------------------------------------------------------
-
-
-; -----------------------------------------------------------------------------
-; os_mem_copy -- Copy a number of bytes
-;  IN:	RSI = Source address
-;	RDI = Destination address
-;	RCX = Number of bytes to copy
-; OUT:	Nothing, all registers preserved
-os_mem_copy:
-	push rdi
-	push rsi
-	push rcx
-
-	rep movsb			; Optimize this!
-
-	pop rcx
-	pop rsi
-	pop rdi
 	ret
 ; -----------------------------------------------------------------------------
 

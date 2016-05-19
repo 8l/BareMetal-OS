@@ -1,6 +1,6 @@
 ; =============================================================================
 ; BareMetal -- a 64-bit OS written in Assembly for x86-64 systems
-; Copyright (C) 2008-2014 Return Infinity -- see LICENSE.TXT
+; Copyright (C) 2008-2016 Return Infinity -- see LICENSE.TXT
 ;
 ; Input Functions
 ; =============================================================================
@@ -14,7 +14,7 @@ align 16
 ; os_input -- Take string from keyboard entry
 ;  IN:	RDI = location where string will be stored
 ;	RCX = maximum number of characters to accept
-; OUT:	RCX = length of string that was input (NULL not counted)
+; OUT:	RCX = length of string that was received (NULL not counted)
 ;	All other registers preserved
 os_input:
 	push rdi
@@ -22,7 +22,7 @@ os_input:
 	push rax
 
 	mov rdx, rcx			; Max chars to accept
-	xor rcx, rcx			; Offset from start
+	xor ecx, ecx			; Offset from start
 
 os_input_more:
 	mov al, '_'
@@ -61,11 +61,12 @@ os_input_halt:
 	hlt				; Halt until another keystroke is received
 	jmp os_input_more
 
-os_input_done:	
+os_input_done:
 	mov al, 0x00
 	stosb				; We NULL terminate the string
 	mov al, ' '
 	call os_output_char
+	call os_print_newline
 
 	pop rax
 	pop rdx
@@ -77,7 +78,7 @@ os_input_done:
 ; -----------------------------------------------------------------------------
 ; os_input_key -- Scans keyboard for input
 ;  IN:	Nothing
-; OUT:	AL = 0 if no key pressed, otherwise ASCII code, other regs preserved
+; OUT:	AL = 0 if no key pressed, otherwise ASCII code
 ;	Carry flag is set if there was a keystroke, clear if there was not
 ;	All other registers preserved
 os_input_key:

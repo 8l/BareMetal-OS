@@ -1,6 +1,6 @@
 // =============================================================================
 // BareMetal -- a 64-bit OS written in Assembly for x86-64 systems
-// Copyright (C) 2008-2014 Return Infinity -- see LICENSE.TXT
+// Copyright (C) 2008-2016 Return Infinity -- see LICENSE.TXT
 //
 // The BareMetal OS C/C++ library header.
 //
@@ -8,7 +8,8 @@
 //
 // This allows for a C/C++ program to access OS functions available in BareMetal OS
 // =============================================================================
-
+#ifndef _LIBBAREMETAL_H
+#define _LIBBAREMETAL_H 1
 
 void b_output(const char *str);
 void b_output_chars(const char *str, unsigned long nbr);
@@ -65,3 +66,5 @@ void b_system_misc(unsigned long function, void* var1, void* var2);
 
 // =============================================================================
 // EOF
+
+#endif

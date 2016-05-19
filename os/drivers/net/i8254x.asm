@@ -1,6 +1,6 @@
 ; =============================================================================
 ; BareMetal -- a 64-bit OS written in Assembly for x86-64 systems
-; Copyright (C) 2008-2014 Return Infinity -- see LICENSE.TXT
+; Copyright (C) 2008-2016 Return Infinity -- see LICENSE.TXT
 ;
 ; Intel i8254x NIC.
 ; =============================================================================
@@ -32,6 +32,12 @@ os_net_i8254x_init:
 	mov dl, 0x0F				; Get device's IRQ number from PCI Register 15 (IRQ is bits 7-0)
 	call os_pci_read_reg
 	mov [os_NetIRQ], al			; AL holds the IRQ
+
+	; Enable PCI Bus Mastering
+	mov dl, 0x01				; Get Status/Command
+	call os_pci_read_reg
+	bts eax, 2
+	call os_pci_write_reg
 
 	; Grab the MAC address
 	mov rsi, [os_NetIOBaseMem]
@@ -162,8 +168,7 @@ os_net_i8254x_reset:
 	mov [rsi+I8254X_REG_RDTR], eax		; Clear the Receive Delay Timer Register
 	mov [rsi+I8254X_REG_RADV], eax		; Clear the Receive Interrupt Absolute Delay Timer
 	mov [rsi+I8254X_REG_RSRPD], eax		; Clear the Receive Small Packet Detect Interrupt
-	bts eax, 0				; TXDW
-	bts eax, 7				; RXT0
+
 	mov eax, 0x1FFFF			; Temp enable all interrupt types
 	mov [rsi+I8254X_REG_IMS], eax		; Enable interrupt types
 

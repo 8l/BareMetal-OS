@@ -13,14 +13,15 @@ ld -T app.ld -o 3dstars.app crt0.o 3dstars.o libBareMetal.o libc.a libm.a
 void clear_screen();
 void put_pixel(unsigned int x, unsigned int y, unsigned char red, unsigned char blue, unsigned char green);
 
-unsigned long VideoX, VideoY, VideoBPP;
+unsigned long VideoX, VideoY, VideoBPP, VideoMemorySize;
 char* VideoMemory;
+char* VideoMemoryBuffer;
 int numstars = 1000;
 int PER = 256;
 
 typedef struct {
 	double x, y, z;
-	int dx, dy, dx1, dy1;
+	int dx, dy;
 } stardata;
 
 int main()
@@ -30,7 +31,7 @@ int main()
 	double rads = 360 / (2 * M_PI);
 	double sind1, cosd1, sind2, cosd2;
 	stardata star[numstars];
-	float a1=0, a2=0, zval=0;
+	float a1=0, a2=0;
 	unsigned char tchar;
 
 	VideoMemory = (char*)b_system_config(20, 0);
@@ -42,6 +43,10 @@ int main()
 	VideoX = b_system_config(21, 0);
 	VideoY = b_system_config(22, 0);
 	VideoBPP = b_system_config(23, 0);
+
+	VideoMemorySize = VideoX * VideoY * (VideoBPP / 4);
+
+	VideoMemoryBuffer = (char*)malloc(VideoMemorySize);
 
 	for (n=0; n<numstars; n++)
 	{
@@ -91,13 +96,17 @@ int main()
 		a1+=0.01;
 		a2+=0.00001;
 
+		// Clear the Video buffer
+		memset(VideoMemoryBuffer, 0x00, VideoMemorySize);
+
+		// Draw the scene
 		for (n=0; n<numstars; n++)
 		{
-			put_pixel(star[n].dx1, star[n].dy1, 0, 0, 0);
 			put_pixel(star[n].dx, star[n].dy, 255, 255, 255);
-			star[n].dx1 = star[n].dx;
-			star[n].dy1 = star[n].dy;
 		}
+
+		// Write the Video buffer to the screen
+		memcpy(VideoMemory, VideoMemoryBuffer, VideoMemorySize);
 	}
 
 	clear_screen();
@@ -115,7 +124,7 @@ void clear_screen()
 	memset(VideoMemory, 0x00, bytes);
 }
 
-void put_pixel(unsigned int x, unsigned int y, unsigned char red, unsigned char blue, unsigned char green)
+void put_pixel(unsigned int x, unsigned int y, unsigned char red, unsigned char green, unsigned char blue)
 {
 	int offset = 0;
 	if (x >= 0 && x < VideoX && y >= 0 && y < VideoY) // Sanity check
@@ -124,17 +133,17 @@ void put_pixel(unsigned int x, unsigned int y, unsigned char red, unsigned char 
 		if (VideoBPP == 24)
 		{
 			offset = offset * 3;
-			VideoMemory[offset] = red;
-			VideoMemory[offset+1] = blue;
-			VideoMemory[offset+2] = green;
+			VideoMemoryBuffer[offset] = blue;
+			VideoMemoryBuffer[offset+1] = green;
+			VideoMemoryBuffer[offset+2] = red;
 		}
 		else if (VideoBPP == 32)
 		{
 			offset = offset * 4;
-			VideoMemory[offset] = 0x00;
-			VideoMemory[offset+1] = red;
-			VideoMemory[offset+3] = blue;
-			VideoMemory[offset+4] = green;
+			VideoMemoryBuffer[offset] = 0x00;
+			VideoMemoryBuffer[offset+1] = blue;
+			VideoMemoryBuffer[offset+2] = green;
+			VideoMemoryBuffer[offset+3] = red;
 		}
 	}
 }
